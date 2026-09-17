@@ -1,0 +1,109 @@
+/* ==========================================================
+   Church History Timeline — Base — reset, CSS variables, app shell, shared button primitives
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+:root {
+  --bg: #1b1a17;
+  --bg-panel: #232019;
+  --parchment: #f4ecd8;
+  --parchment-dim: #e6dcc3;
+  --ink: #2b2620;
+  --ink-soft: #58503f;
+  --gold: #c99a1e;
+  --gold-bright: #e8c257;
+  --line: rgba(244, 236, 216, 0.14);
+  --line-strong: rgba(244, 236, 216, 0.28);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --radius: 10px;
+  --font-serif: Georgia, "Times New Roman", "Iowan Old Style", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--parchment);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line-strong);
+  background: rgba(244, 236, 216, 0.05);
+  color: var(--parchment);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: rgba(201, 154, 30, 0.16); border-color: var(--gold); }
+.btn.active { background: rgba(201, 154, 30, 0.25); border-color: var(--gold); color: var(--gold-bright); }
+
+.btn-icon-only {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.btn-small {
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.jump-btn {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: #8a6d1f;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  border-radius: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.jump-btn:hover { background: #f5e8c4; }
+
+.read-article-btn {
+  background: var(--ink);
+  color: var(--parchment);
+  border-color: var(--ink);
+  font-weight: 600;
+}
+.read-article-btn:hover { background: #3a3222; }
+
+.google-search-btn {
+  background: #eef4fb;
+  color: #2451a3;
+  border-color: rgba(46,111,224,0.35);
+}
+.google-search-btn:hover { background: #dce9f7; }
+
+/* Scrollbars */
+#side-panel-body::-webkit-scrollbar, #filter-drawer::-webkit-scrollbar { width: 8px; }
+#side-panel-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }

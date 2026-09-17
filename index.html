@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Church History Timeline</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/top-bar.css">
+<link rel="stylesheet" href="css/datasource-filters.css">
+<link rel="stylesheet" href="css/map-view.css">
+<link rel="stylesheet" href="css/side-panel.css">
+<link rel="stylesheet" href="css/article-view.css">
+<link rel="stylesheet" href="css/mobile-view.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="top-bar">
+    <div id="brand">
+      <span class="mark">✝ Church History</span>
+      <span class="sub">Interactive Timeline</span>
+    </div>
+
+    <div id="search-wrap">
+      <span id="search-icon">&#128269;</span>
+      <input id="search-input" type="text" placeholder="Search people, events, works, movements…" autocomplete="off">
+      <div id="search-results"></div>
+    </div>
+
+    <div id="top-bar-actions">
+      <button class="btn" id="works-library-btn">Works Library</button>
+      <button class="btn" id="filter-toggle-btn">Filters</button>
+      <button class="btn no-drag" id="mobile-search-toggle-btn" title="Search">&#128269;</button>
+      <button class="btn" id="view-toggle-btn">List View</button>
+      <button class="btn" id="reset-view-btn">Reset View</button>
+    </div>
+  </header>
+
+  <div id="datasource-bar" class="no-drag" role="group" aria-label="Timeline data source">
+    <span class="datasource-bar-label">Showing:</span>
+    <div id="datasource-toggle" class="segmented">
+      <button class="seg-btn active" data-source="church">Church History</button>
+      <button class="seg-btn" data-source="bible">Bible Books</button>
+      <button class="seg-btn" data-source="combined">Combined</button>
+    </div>
+  </div>
+
+  <div id="legend-bar" aria-label="Category color legend">
+    <span class="legend-bar-label">Color Key:</span>
+    <div id="legend-bar-items"></div>
+  </div>
+
+  <div id="filter-drawer">
+    <div id="filter-drawer-inner">
+      <div class="filter-group" id="filter-era">
+        <h4>Era</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <div class="filter-group" id="filter-category">
+        <h4>Category</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <div class="filter-group" id="filter-region">
+        <h4>Region</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <div class="filter-group" id="filter-movement">
+        <h4>Movement / Tradition</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <div class="filter-group" id="filter-genre">
+        <h4>Genre</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <div class="filter-group" id="filter-consensus">
+        <h4>Authorship Consensus</h4>
+        <div class="filter-chip-row"></div>
+      </div>
+      <button class="btn" id="filter-clear-btn">Clear All</button>
+    </div>
+  </div>
+
+  <main id="timeline-area">
+    <div id="timeline-viewport">
+      <div id="era-band-layer"></div>
+      <div id="axis-layer"></div>
+      <div id="center-line"></div>
+      <div id="lifespan-layer"></div>
+      <div id="lanes-layer"></div>
+    </div>
+
+    <div id="empty-state" style="display:none;">
+      <h3>No events match your filters</h3>
+      <p>Try clearing a filter to see more of church history.</p>
+    </div>
+
+    <div id="hint-banner">Drag to pan &nbsp;•&nbsp; Scroll / pinch to zoom &nbsp;•&nbsp; Click an event to explore</div>
+
+    <div id="bottom-left-controls" class="no-drag">
+      <div id="zoom-readout">Zoom: 100%</div>
+    </div>
+
+    <div id="nav-controls" class="no-drag">
+      <button class="nav-btn" id="zoom-in-btn" title="Zoom in">+</button>
+      <button class="nav-btn" id="zoom-out-btn" title="Zoom out">&minus;</button>
+    </div>
+  </main>
+
+  <main id="mobile-view">
+    <div id="mobile-list-wrap">
+      <div id="mobile-event-list"></div>
+      <div id="mobile-empty-state" style="display:none;">
+        <h3>No events match your filters</h3>
+        <p>Try clearing a filter to see more of church history.</p>
+      </div>
+    </div>
+    <div id="mobile-scrubber">
+      <div id="mobile-scrubber-bands"></div>
+      <div id="mobile-scrubber-thumb"></div>
+    </div>
+    <div id="mobile-scrub-bubble"></div>
+  </main>
+
+  <aside id="side-panel">
+    <div id="side-panel-header">
+      <div></div>
+      <button id="side-panel-close" title="Close">&times;</button>
+    </div>
+    <div id="side-panel-body"></div>
+  </aside>
+
+  <div id="article-view">
+    <div id="article-topbar">
+      <button id="article-back-btn">&larr; Back to Timeline</button>
+      <div id="article-breadcrumb"></div>
+    </div>
+    <div id="article-scroll">
+      <div id="article-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/data/categories.js"></script>
+<script src="js/data/people.js"></script>
+<script src="js/data/works.js"></script>
+<script src="js/data/movements.js"></script>
+<script src="js/data/events.js"></script>
+<script src="js/data/bible-categories.js"></script>
+<script src="js/data/bible-books.js"></script>
+<script src="js/app/core.js"></script>
+<script src="js/app/map-view.js"></script>
+<script src="js/app/filters.js"></script>
+<script src="js/app/side-panel.js"></script>
+<script src="js/app/article-view.js"></script>
+<script src="js/app/search.js"></script>
+<script src="js/app/mobile-list.js"></script>
+<script src="js/app/init.js"></script>
+</body>
+</html>

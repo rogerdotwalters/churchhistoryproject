@@ -1,0 +1,281 @@
+/* ==========================================================
+   Church History Timeline — Article View — full-page articles and the Works Library index
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+/* ---------------- Full-page article view ---------------- */
+
+#article-view {
+  position: fixed;
+  inset: 0;
+  background: var(--parchment);
+  color: var(--ink);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+}
+#article-view.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+#article-topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 2px solid rgba(0,0,0,0.08);
+  background: #fbf6e9;
+}
+
+#article-back-btn {
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+#article-back-btn:hover { background: #f5e8c4; }
+
+#article-breadcrumb {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+}
+
+#article-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+#article-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 28px 90px;
+}
+
+.article-hero {
+  padding: 36px 0 20px;
+  border-bottom: 3px solid var(--hero-color, var(--gold));
+  margin-bottom: 20px;
+}
+.article-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 13px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.article-hero h1 {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  line-height: 1.15;
+  margin: 14px 0 10px;
+}
+.article-meta {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.article-lede {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #4a4030;
+  border-left: 4px solid var(--gold);
+  padding-left: 16px;
+  margin: 18px 0 26px;
+}
+
+.article-body p {
+  font-size: 16.5px;
+  line-height: 1.75;
+  margin: 0 0 18px;
+  color: #2b2620;
+}
+
+.article-section {
+  margin: 34px 0;
+  padding-top: 22px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+.article-section h3 {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8a6d1f;
+  margin: 0 0 16px;
+}
+.article-section p {
+  font-size: 15.5px;
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+
+.article-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.article-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+}
+.article-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+.article-card-kicker {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-soft);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+}
+.article-card-kicker .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+  flex: 0 0 auto;
+}
+.article-card-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.article-card-desc {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#article-scroll::-webkit-scrollbar { width: 9px; }
+#article-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 5px; }
+
+@media (max-width: 640px) {
+  .article-hero h1 { font-size: 27px; }
+  #article-content { padding: 0 16px 70px; }
+}
+
+.article-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+
+.free-text-badge {
+  display: inline-block;
+  background: rgba(46,158,79,0.15);
+  color: #1f7a3d;
+  border: 1px solid rgba(46,158,79,0.4);
+  border-radius: 9px;
+  padding: 1px 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.full-text-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #eaf6ee;
+  border: 1px solid rgba(46,158,79,0.4);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 20px 0;
+}
+.full-text-callout-label {
+  font-size: 13.5px;
+  color: #1f5c30;
+  font-weight: 600;
+}
+.full-text-callout-btn {
+  display: inline-block;
+  background: #2E9E4F;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  border-radius: 20px;
+  padding: 9px 18px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.full-text-callout-btn:hover { background: #257f3f; }
+
+.works-index-section {
+  margin: 8px 0 40px;
+}
+.works-index-heading {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  color: var(--ink);
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 8px;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.works-index-count {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  font-family: var(--font-sans, inherit);
+}
+.works-index-note {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 14px;
+}
+.work-index-card .article-card-desc { -webkit-line-clamp: 2; }
+.work-index-author {
+  font-size: 11.5px;
+  color: #8a6d1f;
+  font-weight: 600;
+  margin-bottom: 4px;
+}

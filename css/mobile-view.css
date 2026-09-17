@@ -1,0 +1,192 @@
+/* ==========================================================
+   Church History Timeline — Mobile List View — touch-first row list, scrub rail, and mode-mobile overrides
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+/* ==========================================================
+   Mobile List View — touch-first alternate presentation:
+   a scrollable row-by-row event list with a drag-to-scrub
+   rail on the right, plus a collapsible search dropdown.
+   ========================================================== */
+
+#mobile-search-toggle-btn { display: none; }
+
+.mode-mobile #timeline-area,
+.mode-mobile #legend-bar,
+.mode-mobile #hint-banner { display: none !important; }
+.mode-mobile #mobile-view { display: flex; }
+.mode-mobile #reset-view-btn { display: none; }
+.mode-mobile #mobile-search-toggle-btn { display: inline-flex; }
+
+.mode-mobile #search-wrap { display: none; }
+.mode-mobile #search-wrap.mobile-search-open {
+  display: flex;
+  position: fixed;
+  top: 140px;
+  left: 10px;
+  right: 10px;
+  max-width: none;
+  z-index: 250;
+}
+
+#mobile-view {
+  display: none;
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(201,154,30,0.06), transparent 60%),
+    var(--bg);
+}
+
+#mobile-list-wrap {
+  position: absolute;
+  inset: 0;
+  right: 46px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 6px 40px 8px;
+}
+#mobile-list-wrap::-webkit-scrollbar { width: 4px; }
+#mobile-list-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+.mobile-era-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg);
+  padding: 12px 6px 7px;
+  font-family: var(--font-serif);
+  font-size: 13.5px;
+  letter-spacing: 0.4px;
+  color: var(--gold-bright);
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-event-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  border-radius: 8px;
+}
+.mobile-event-row:active { background: rgba(201,154,30,0.16); }
+@media (hover: hover) {
+  .mobile-event-row:hover { background: rgba(201,154,30,0.1); }
+}
+.mobile-event-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.25);
+}
+.mobile-event-year {
+  flex: 0 0 auto;
+  width: 60px;
+  font-size: 11.5px;
+  color: var(--gold);
+  font-weight: 600;
+  padding-top: 1px;
+}
+.mobile-event-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.mobile-event-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--parchment);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.mobile-event-summary {
+  font-size: 12px;
+  color: #9a917c;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#mobile-empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #9a917c;
+}
+#mobile-empty-state h3 { font-family: var(--font-serif); color: var(--gold-bright); margin-bottom: 6px; }
+
+#mobile-scrubber {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 4px;
+  width: 34px;
+  border-radius: 17px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  touch-action: none;
+  cursor: grab;
+  overflow: hidden;
+}
+#mobile-scrubber.active { cursor: grabbing; border-color: var(--gold); }
+#mobile-scrubber-bands { position: absolute; inset: 0; }
+.mobile-scrubber-band {
+  position: absolute;
+  left: 0; right: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+  opacity: 0.75;
+}
+#mobile-scrubber-thumb {
+  position: absolute;
+  left: 2px; right: 2px;
+  height: 26px;
+  margin-top: -13px;
+  border-radius: 13px;
+  background: var(--gold-bright);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  border: 2px solid var(--ink);
+}
+#mobile-scrubber-thumb::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 14px; height: 2px;
+  background: var(--ink);
+  transform: translate(-50%,-50%);
+  box-shadow: 0 -4px 0 var(--ink), 0 4px 0 var(--ink);
+}
+
+#mobile-scrub-bubble {
+  position: absolute;
+  right: 46px;
+  top: 0;
+  padding: 7px 13px;
+  background: var(--ink);
+  color: var(--gold-bright);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.12s;
+  pointer-events: none;
+  z-index: 20;
+}
+#mobile-scrub-bubble.visible { opacity: 1; }
+
+@media (max-width: 480px) {
+  .mobile-event-year { width: 50px; font-size: 10.5px; }
+  .mobile-event-title { font-size: 13px; }
+}

@@ -1,0 +1,290 @@
+/* ==========================================================
+   Church History Timeline — Map View — timeline canvas, era bands, axis, event nodes, nav controls, legend, empty state
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+/* ---------------- Timeline area ---------------- */
+
+#timeline-area {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(201,154,30,0.06), transparent 60%),
+    var(--bg);
+  cursor: grab;
+  touch-action: none;
+}
+#timeline-area.dragging { cursor: grabbing; }
+
+#timeline-viewport {
+  position: absolute;
+  inset: 0;
+}
+
+#era-band-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 34px;
+  right: 0;
+  z-index: 3;
+}
+.era-band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--line);
+  background: rgba(244, 236, 216, 0.03);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #b9ac86;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+#axis-layer {
+  position: absolute;
+  top: 34px;
+  left: 0;
+  right: 0;
+  height: 30px;
+  border-bottom: 1px solid var(--line-strong);
+  background: rgba(0,0,0,0.18);
+  z-index: 3;
+}
+
+.axis-marker {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #a99f84;
+  padding-left: 6px;
+  border-left: 1px solid var(--line);
+  white-space: nowrap;
+}
+.axis-marker.major {
+  color: var(--gold-bright);
+  font-weight: 600;
+  border-left: 1px solid var(--line-strong);
+}
+
+#center-line {
+  position: absolute;
+  top: 64px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+#lifespan-layer {
+  position: absolute;
+  top: 78px;
+  left: 0;
+  right: 0;
+  height: 30px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+#lanes-layer {
+  position: absolute;
+  top: 78px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: visible;
+}
+
+.lifespan-track {
+  position: absolute;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(232,194,87,0.15), rgba(232,194,87,0.55), rgba(232,194,87,0.15));
+  top: 8px;
+  z-index: 2;
+}
+
+/* Event nodes */
+.event-node {
+  position: absolute;
+  transform: translate(-50%, 0);
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.35);
+  padding: 5px 10px;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: box-shadow 0.15s, transform 0.15s, filter 0.15s, max-width 0.2s ease;
+}
+.event-node:hover {
+  filter: brightness(1.18);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+  z-index: 999 !important;
+  max-width: 640px !important;
+  transform: translate(-50%, -2px) scale(1.04);
+}
+.event-node.selected {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+.event-node .dot-year {
+  font-size: 10px;
+  opacity: 0.85;
+  flex: 0 0 auto;
+}
+.event-node.dimmed { opacity: 0.16; }
+
+.event-node.node-sm { padding: 3px 8px; font-size: 11px; }
+.event-node.node-lg { padding: 7px 14px; font-size: 13.5px; font-weight: 600; }
+.event-node.node-xl { padding: 9px 16px; font-size: 15px; font-weight: 700; }
+
+/* ---------------- Zoom / nav controls ---------------- */
+
+#nav-controls {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 30;
+}
+
+.nav-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: rgba(35, 32, 25, 0.9);
+  color: var(--parchment);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.nav-btn:hover { background: rgba(201, 154, 30, 0.3); }
+
+#bottom-left-controls {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+}
+
+#zoom-readout {
+  font-size: 11px;
+  color: #9a917c;
+  background: rgba(35,32,25,0.75);
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+#hint-banner {
+  position: absolute;
+  bottom: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(35,32,25,0.9);
+  border: 1px solid var(--line-strong);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #cfc4a4;
+  z-index: 25;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+/* ---------------- Persistent legend bar (always visible) ---------------- */
+
+#legend-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 20px;
+  background: #1e1b16;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.legend-bar-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9a917c;
+  flex: 0 0 auto;
+}
+
+#legend-bar-items {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.legend-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #cfc4a4;
+  flex: 0 0 auto;
+}
+.legend-bar-item .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+}
+
+/* Empty state */
+#empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #9a917c;
+  z-index: 5;
+  pointer-events: none;
+}
+#empty-state h3 { font-family: var(--font-serif); color: var(--gold-bright); margin-bottom: 6px; }
+
+@media (max-width: 760px) {
+  #legend-bar { padding: 6px 12px; gap: 8px; }
+}

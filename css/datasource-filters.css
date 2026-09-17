@@ -1,0 +1,136 @@
+/* ==========================================================
+   Church History Timeline — Data-Source Toggle & Filter Drawer — Church/Bible/Combined segmented control, filter chips
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+/* ---------------- Data source toggle (Church / Bible / Combined) ---------------- */
+
+#datasource-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  background: #201d17;
+  border-bottom: 1px solid var(--line);
+}
+
+.datasource-bar-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9a917c;
+  flex: 0 0 auto;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  border: none;
+  border-right: 1px solid var(--line-strong);
+  background: rgba(244, 236, 216, 0.04);
+  color: #d8cfb8;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn:hover { background: rgba(201, 154, 30, 0.16); }
+.seg-btn.active {
+  background: var(--gold);
+  color: #201d17;
+  font-weight: 600;
+}
+
+/* ---------------- Filter drawer ---------------- */
+
+#filter-drawer {
+  flex: 0 0 auto;
+  max-height: 0;
+  overflow: hidden;
+  background: #201d17;
+  border-bottom: 1px solid var(--line);
+  transition: max-height 0.25s ease;
+}
+#filter-drawer.open { max-height: 260px; overflow-y: auto; }
+
+#filter-drawer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 14px 20px;
+}
+
+.filter-group {
+  min-width: 160px;
+}
+
+.filter-group h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 340px;
+}
+
+.chip {
+  padding: 5px 11px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: rgba(244, 236, 216, 0.04);
+  color: #d8cfb8;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip:hover { border-color: var(--gold); }
+.chip.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #201d17;
+  font-weight: 600;
+}
+.chip .dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+#filter-clear-btn {
+  align-self: flex-start;
+  margin-top: 22px;
+}
+
+@media (max-width: 760px) {
+  #datasource-bar { padding: 6px 12px; gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .datasource-bar-label { display: none; }
+  .seg-btn { padding: 6px 9px; font-size: 11.5px; }
+}

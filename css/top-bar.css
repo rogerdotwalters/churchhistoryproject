@@ -1,0 +1,161 @@
+/* ==========================================================
+   Church History Timeline — Top Bar — brand, search input & dropdown, top-bar action buttons
+   Part of the split stylesheet (see css/ for the rest): base.css,
+   top-bar.css, datasource-filters.css, map-view.css, side-panel.css,
+   article-view.css, mobile-view.css. Loaded as separate <link>
+   tags in index.html; order barely matters for CSS (later same-
+   specificity rules win, and there are no same-selector conflicts
+   across these files) — base.css is simply listed first as a
+   convention, since it holds the shared :root variables and button
+   primitives (.btn, .jump-btn, .read-article-btn, .google-search-btn)
+   the other files build on.
+   ========================================================== */
+
+/* ---------------- Header / Top bar ---------------- */
+
+#top-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, #26221b, #201d17);
+  border-bottom: 1px solid var(--line);
+  z-index: 40;
+}
+
+#brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+#brand .mark {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--gold-bright);
+  letter-spacing: 0.5px;
+}
+
+#brand .sub {
+  font-size: 11px;
+  color: var(--ink-soft);
+  color: #9a917c;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* Search */
+#search-wrap {
+  position: relative;
+  flex: 1 1 340px;
+  max-width: 480px;
+}
+
+#search-input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border-radius: 20px;
+  border: 1px solid var(--line-strong);
+  background: rgba(244, 236, 216, 0.06);
+  color: var(--parchment);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+#search-input::placeholder { color: #9a917c; }
+#search-input:focus {
+  border-color: var(--gold);
+  background: rgba(244, 236, 216, 0.1);
+}
+
+#search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #9a917c;
+  pointer-events: none;
+}
+
+#search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #2a2620;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-height: 420px;
+  overflow-y: auto;
+  display: none;
+  z-index: 50;
+}
+#search-results.open { display: block; }
+
+.search-group-label {
+  padding: 8px 14px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9a917c;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.search-result-item:hover { background: rgba(201, 154, 30, 0.14); }
+
+.search-result-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.search-result-text { flex: 1; min-width: 0; }
+.search-result-name {
+  font-size: 13.5px;
+  color: var(--parchment);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-meta {
+  font-size: 11px;
+  color: #9a917c;
+}
+
+.search-empty {
+  padding: 16px;
+  font-size: 13px;
+  color: #9a917c;
+  text-align: center;
+}
+
+/* Buttons in top bar */
+#top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+#works-library-btn {
+  border-color: rgba(46,158,79,0.5);
+  color: #1f7a3d;
+}
+#works-library-btn:hover { background: rgba(46,158,79,0.12); }
+
+@media (max-width: 760px) {
+  #top-bar { flex-wrap: wrap; height: auto; }
+  #search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
+}
