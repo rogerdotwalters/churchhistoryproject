@@ -55,26 +55,86 @@ function computeInitialView() {
   state.panX = state.viewportW * 0.02;
   state.panY = 0;
   clampPan();
+  nodeScaleBaseZoom = state.zoom; // recalibrate the bubble zoom-scale baseline to the new fit (desktop + mobile)
 }
 
 /* ---------------- DOM: static one-time builds ---------------- */
 const lanesLayer = $("#lanes-layer");
 const eventNodeEls = new Map();
 
-function importanceClass(imp) {
-  if (imp >= 9) return "node-xl";
-  if (imp >= 7) return "node-lg";
-  if (imp >= 5) return "";
-  return "node-sm";
-}
+/* ---------------- Bubble base size (desktop: importance-based; mobile: uniform) ----------------
+   These are the "resting" (zoom=baseline, slider=1x) dimensions. Actual
+   on-screen size is computed fresh every renderLanes() call by
+   nodeWidthPx()/nodeFontPx()/nodePaddingPx() below, which combine these
+   bases with the zoom-linked scale factor (nodeZoomScaleFactor()), the
+   mobile-only manual sliders, and a screen-relative cap so bubbles can
+   never grow past a sane fraction of the viewport regardless of zoom. */
 function importanceWidth(imp) {
-  return clamp(64 + (imp || 5) * 11, 90, 210);
+  return clamp(120 + (imp || 5) * 18, 160, 320);
+}
+function importanceFontPx(imp) {
+  if (imp >= 9) return 15;
+  if (imp >= 7) return 13.5;
+  if (imp >= 5) return 12;
+  return 11;
+}
+function importancePadding(imp) {
+  if (imp >= 9) return [9, 16];
+  if (imp >= 7) return [7, 14];
+  if (imp >= 5) return [5, 10];
+  return [3, 8];
+}
+
+const MOBILE_NODE_BASE_WIDTH = 150;
+const MOBILE_NODE_BASE_FONT = 12.5;
+const MOBILE_NODE_BASE_PADDING = [6, 12];
+
+// Absolute pixel floors/ceilings so a bubble is always "relevant to the
+// screen": it can shrink or grow with zoom/sliders, but never past these.
+// The fraction leaves headroom above the resting (1x) base sizes above —
+// on a ~390px-wide phone that's a ~195px ceiling, comfortably above the
+// 150px mobile base so the zoom-scale and Bubble Size slider both have
+// visible room to work before a bubble gets capped down to "relevant to
+// the screen" size.
+const NODE_MIN_WIDTH = 60;
+const NODE_MAX_WIDTH_FRACTION = 0.5; // of the current viewport width
+const NODE_MIN_FONT = 9;
+const NODE_MAX_FONT = 22;
+
+function nodeWidthPx(item, mobile, zoomScale) {
+  const base = mobile ? MOBILE_NODE_BASE_WIDTH : importanceWidth(item.importance);
+  const sizeMult = mobile ? state.mobileSizeMultiplier : 1;
+  const maxW = Math.max(NODE_MIN_WIDTH, state.viewportW * NODE_MAX_WIDTH_FRACTION);
+  return clamp(base * zoomScale * sizeMult, NODE_MIN_WIDTH, maxW);
+}
+function nodeFontPx(item, mobile, zoomScale) {
+  const base = mobile ? MOBILE_NODE_BASE_FONT : importanceFontPx(item.importance);
+  const textMult = mobile ? state.mobileTextMultiplier : 1;
+  return clamp(base * zoomScale * textMult, NODE_MIN_FONT, NODE_MAX_FONT);
+}
+function nodePaddingPx(item, mobile, zoomScale) {
+  const [baseV, baseH] = mobile ? MOBILE_NODE_BASE_PADDING : importancePadding(item.importance);
+  // Padding follows a gentler curve than width/font (sqrt of the zoom
+  // scale) so bubbles don't turn into mostly-whitespace pills at high zoom.
+  const factor = Math.sqrt(zoomScale);
+  return [clamp(baseV * factor, 2, 16), clamp(baseH * factor, 6, 26)];
+}
+
+/* Neutralizes the desktop hover "pop out and expand" affordance on mobile,
+   where bubbles are display-only (see handleMobileNodeTap below) — a
+   touch's synthetic hover state would otherwise still trigger it even
+   though tapping no longer opens anything. Also swaps the clickable
+   pointer cursor for the map's own grab/grabbing cursor. Sizing itself is
+   handled entirely by nodeWidthPx/nodeFontPx/nodePaddingPx above, not by
+   this class. */
+function applyNodeInteractionClass(el, mobile) {
+  el.classList.toggle("mobile-noninteractive", mobile);
 }
 
 function createEventNodeEls() {
   ALL_ITEMS.forEach((item) => {
     const el = document.createElement("div");
-    el.className = "event-node " + importanceClass(item.importance);
+    el.className = "event-node";
     el.style.background = categoryColor(item);
     el.dataset.id = item.id;
     el.innerHTML =
@@ -82,6 +142,7 @@ function createEventNodeEls() {
     el.title = item.name;
     on(el, "click", (ev) => {
       ev.stopPropagation();
+      if (isMobileViewport()) return; // mobile Map View: tap/double-tap handled by the area pointerup listener below, not this click listener (see the note there on pointer-capture retargeting)
       if (state.dragMoved) return; // ignore click that ends a drag
       openTimelineItem(item.id);
     });
@@ -90,15 +151,93 @@ function createEventNodeEls() {
   });
 }
 
+/* ---------------- Mobile map view: tap handling ----------------
+   On narrow/touch viewports the timeline's bubbles become display-only:
+   a single tap does nothing, so a finger can land anywhere — including
+   right on top of a bubble — and still pan or pinch-zoom the map (see
+   the pointerdown handler below, which no longer treats a node as a
+   no-drag zone on mobile). The one interaction left is a double-tap on
+   a bubble, which jumps to that same item's row in Mobile List View
+   (mobile-list.js) instead of opening the side panel in place — List
+   View remains the one place mobile users interact with item details;
+   Map View on mobile is a pure pan/zoom atlas. */
+let lastMobileTapId = null;
+let lastMobileTapTime = 0;
+const MOBILE_DOUBLE_TAP_MS = 450;
+
+function handleMobileNodeTap(id) {
+  const now = Date.now();
+  if (lastMobileTapId === id && now - lastMobileTapTime < MOBILE_DOUBLE_TAP_MS) {
+    lastMobileTapId = null;
+    lastMobileTapTime = 0;
+    goToListViewForItem(id);
+  } else {
+    lastMobileTapId = id;
+    lastMobileTapTime = now;
+  }
+}
+
+/* ---------------- Zoom-responsive bubble scale (desktop + mobile) ----------------
+   Every bubble grows/shrinks together as the user zooms/pinches, on both
+   desktop and mobile, so zooming in is a real way to read dense clusters
+   instead of a no-op for bubble size. `nodeScaleBaseZoom` captures the
+   zoom level at the initial fit-to-domain view (and again on "Reset
+   View"), and the scale factor is relative to that baseline — a sqrt
+   curve keeps the growth gentle. The factor itself is loosely clamped;
+   what actually keeps a bubble "relevant to the screen" no matter how far
+   zoomed in is the absolute/viewport-relative clamp applied per-node in
+   nodeWidthPx()/nodeFontPx() above. */
+let nodeScaleBaseZoom = null;
+function nodeZoomScaleFactor() {
+  if (!nodeScaleBaseZoom) nodeScaleBaseZoom = state.zoom || 1;
+  const rel = state.zoom / nodeScaleBaseZoom;
+  return clamp(Math.sqrt(rel), 0.5, 3.5);
+}
+
+/* ---------------- Color-key legend — also a category filter ----------------
+   Each legend swatch is clickable: it toggles that category in/out of the
+   same filter state the Filter drawer's chips use (state.filters.categories
+   for Church categories, state.filters.genres for Bible genres), so the
+   two stay in sync no matter which one the user touches. An empty filter
+   set means "show everything" (matching passesFilters()'s existing
+   semantics), so no legend item looks dimmed until at least one is picked. */
 function renderLegend() {
   const wrap = $("#legend-bar-items");
+  wrap.innerHTML = "";
   let cats;
-  if (state.dataSource === "church") cats = Object.entries(CATEGORIES);
-  else if (state.dataSource === "bible") cats = Object.entries(BIBLE_CATEGORIES);
-  else cats = Object.entries(CATEGORIES).concat(Object.entries(BIBLE_CATEGORIES));
-  wrap.innerHTML = cats.map(([key, c]) =>
-    `<div class="legend-bar-item"><span class="dot" style="background:${c.color}"></span>${escapeHtml(c.label)}</div>`
-  ).join("");
+  if (state.dataSource === "church") {
+    cats = Object.entries(CATEGORIES).map(([key, c]) => ({ key, label: c.label, color: c.color, bible: false }));
+  } else if (state.dataSource === "bible") {
+    cats = Object.entries(BIBLE_CATEGORIES).map(([key, c]) => ({ key, label: c.label, color: c.color, bible: true }));
+  } else {
+    cats = Object.entries(CATEGORIES).map(([key, c]) => ({ key, label: c.label, color: c.color, bible: false }))
+      .concat(Object.entries(BIBLE_CATEGORIES).map(([key, c]) => ({ key, label: c.label, color: c.color, bible: true })));
+  }
+  cats.forEach((cat) => {
+    const activeSet = cat.bible ? state.filters.genres : state.filters.categories;
+    const selected = activeSet.has(cat.key);
+    const dimmed = activeSet.size > 0 && !selected;
+    const el = document.createElement("div");
+    el.className = "legend-bar-item" + (selected ? " selected" : "") + (dimmed ? " dimmed" : "");
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.title = `Filter by ${cat.label}`;
+    el.innerHTML = `<span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.label)}`;
+    on(el, "click", () => toggleLegendCategory(cat.key, cat.bible));
+    on(el, "keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleLegendCategory(cat.key, cat.bible); }
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function toggleLegendCategory(key, isBible) {
+  const activeSet = isBible ? state.filters.genres : state.filters.categories;
+  if (activeSet.has(key)) activeSet.delete(key); else activeSet.add(key);
+  renderLegend();
+  renderFilterChips();
+  renderLanes();
+  if (state.mobileMode) renderMobileList();
 }
 
 /* ---------------- Rendering: era bands / axis / lanes ---------------- */
@@ -175,6 +314,8 @@ function renderLanes() {
   const ppy = pixelsPerYear();
   const filterActive = anyFilterActive();
   const visible = [];
+  const mobile = isMobileViewport();
+  const zoomScale = nodeZoomScaleFactor();
 
   ALL_ITEMS.forEach((item) => {
     const pass = itemActiveForDataSource(item) && passesFilters(item);
@@ -184,7 +325,7 @@ function renderLanes() {
       return;
     }
     el.style.display = "flex";
-    const width = importanceWidth(item.importance);
+    const width = nodeWidthPx(item, mobile, zoomScale);
     const cx = screenX(item.startYear);
     visible.push({ evt: item, el, width, cx, left: cx - width / 2, right: cx + width / 2 });
   });
@@ -203,11 +344,35 @@ function renderLanes() {
   let onScreenCount = 0;
   visible.forEach((item) => {
     const top = 10 + item.lane * ROW_HEIGHT;
+    const [padV, padH] = nodePaddingPx(item.evt, mobile, zoomScale);
     item.el.style.left = item.cx + "px";
     item.el.style.top = top + "px";
-    item.el.style.maxWidth = item.width + "px";
+    // min-width pinned to the same value as max-width: without it, a
+    // node whose text is shorter than its assigned width would just
+    // shrink-to-fit at a bigger font-size, coupling the Text Size slider
+    // to visible bubble width even though bubble width is only supposed
+    // to change with the Bubble Size slider / zoom. Pinning both means
+    // the box always renders at exactly item.width regardless of font
+    // size — except on desktop hover, where the un-`!important` min-width
+    // stays put while the hover rule's `max-width: 640px !important`
+    // raises the ceiling, so a node with genuinely truncated text can
+    // still pop open to show it in full.
+    item.el.style.minWidth = item.width + "px";
+    if (mobile) {
+      // Inline !important is the only thing that can beat the base
+      // .event-node:hover rule's own "640px !important" — a touch's
+      // synthetic hover state must not pop a mobile bubble back open to
+      // full width (see the .mobile-noninteractive:hover comment in
+      // css/map-view.css for why this can't just be a CSS override).
+      item.el.style.setProperty("max-width", item.width + "px", "important");
+    } else {
+      item.el.style.maxWidth = item.width + "px";
+    }
+    item.el.style.fontSize = nodeFontPx(item.evt, mobile, zoomScale) + "px";
+    item.el.style.padding = padV + "px " + padH + "px";
     item.el.style.zIndex = 10 + (item.evt.importance || 5);
     item.el.classList.toggle("selected", item.evt.id === state.selectedEventId);
+    applyNodeInteractionClass(item.el, mobile);
     const offscreen = item.cx < -160 || item.cx > state.viewportW + 160;
     item.el.classList.toggle("dimmed", false);
     if (offscreen) onScreenCount++; // not used further, kept for potential future virtualization
@@ -251,8 +416,28 @@ function jumpToYearRange(startYear, endYear) {
 /* ---------------- Pan / zoom interaction ---------------- */
 const area = $("#timeline-area");
 
+// On mobile, a gesture that starts on a bubble and ends there without
+// moving is a "tap" on that bubble's id — handled below via
+// handleMobileNodeTap() instead of the node's own "click" listener.
+// (Once `area.setPointerCapture()` below has been called for a gesture
+// that started on a node, the browser retargets the resulting "click"
+// event to `area` itself rather than the node — so on mobile, where a
+// pan/pinch must be able to start right on top of a bubble, the node's
+// own click listener can no longer be relied on to see mobile taps at
+// all. Tracking the pointerdown target here and checking it on
+// pointerup, alongside the existing dragMoved flag, sidesteps that
+// retargeting entirely.)
+let mobileTapCandidateId = null;
+
 on(area, "pointerdown", (e) => {
-  if (e.target.closest(".event-node, .no-drag")) return; // let node/control clicks handle themselves
+  if (e.target.closest(".no-drag")) return; // let control clicks (buttons etc.) handle themselves
+  const nodeEl = e.target.closest(".event-node");
+  if (nodeEl && !isMobileViewport()) return; // desktop: let node clicks handle themselves
+  // Mobile: a bubble is no longer a no-drag zone, so a drag/pan gesture can
+  // start right on top of one — bubbles are display-only there (see
+  // handleMobileNodeTap above), and this is exactly what fixes "hard to
+  // scroll" when bubbles cover most of the screen.
+  mobileTapCandidateId = (nodeEl && isMobileViewport()) ? nodeEl.dataset.id : null;
   state.dragging = true;
   state.dragMoved = false;
   state.lastX = e.clientX;
@@ -281,9 +466,14 @@ function endDrag(e) {
   // future independent clicks on event nodes work normally again.
   setTimeout(() => { state.dragMoved = false; }, 0);
 }
-on(area, "pointerup", endDrag);
-on(area, "pointercancel", endDrag);
-on(area, "pointerleave", (e) => { if (state.dragging) endDrag(e); });
+on(area, "pointerup", (e) => {
+  const tapId = (isMobileViewport() && mobileTapCandidateId && !state.dragMoved) ? mobileTapCandidateId : null;
+  endDrag(e);
+  mobileTapCandidateId = null;
+  if (tapId) handleMobileNodeTap(tapId);
+});
+on(area, "pointercancel", (e) => { mobileTapCandidateId = null; endDrag(e); });
+on(area, "pointerleave", (e) => { mobileTapCandidateId = null; if (state.dragging) endDrag(e); });
 
 on(area, "wheel", (e) => {
   e.preventDefault();
@@ -338,12 +528,32 @@ $("#reset-view-btn").addEventListener("click", () => {
   computeInitialView();
   state.selectedEventId = null;
   state.lifespanPerson = null;
+  state.mobileSizeMultiplier = 1;
+  state.mobileTextMultiplier = 1;
+  if (bubbleSizeSlider) bubbleSizeSlider.value = "1";
+  if (textSizeSlider) textSizeSlider.value = "1";
   closeSidePanel();
   renderLanes();
 });
 
 $("#works-library-btn").addEventListener("click", () => {
   location.hash = "#works";
+});
+
+/* ---------------- Manual Bubble Size / Text Size sliders (mobile Map View only) ----------------
+   Layered on top of the automatic zoom-linked scaling above — see
+   state.mobileSizeMultiplier/mobileTextMultiplier (core.js) and
+   nodeWidthPx()/nodeFontPx() above. Only visible in mobile Map View
+   (css/mobile-view.css), but harmless to wire up unconditionally. */
+const bubbleSizeSlider = $("#bubble-size-slider");
+const textSizeSlider = $("#text-size-slider");
+on(bubbleSizeSlider, "input", (e) => {
+  state.mobileSizeMultiplier = parseFloat(e.target.value);
+  renderLanes();
+});
+on(textSizeSlider, "input", (e) => {
+  state.mobileTextMultiplier = parseFloat(e.target.value);
+  renderLanes();
 });
 
 window.addEventListener("resize", () => {

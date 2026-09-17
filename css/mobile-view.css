@@ -26,6 +26,35 @@
 .mode-mobile #reset-view-btn { display: none; }
 .mode-mobile #mobile-search-toggle-btn { display: inline-flex; }
 
+/* Manual Bubble Size / Text Size sliders — only shown in mobile Map View
+   (narrow/touch viewport AND List View not active), where the automatic
+   zoom-linked bubble scaling (map-view.js) can be fine-tuned by hand.
+   Desktop and List View never see these; they're irrelevant there. */
+#mobile-size-bar { display: none; }
+@media (max-width: 820px) {
+  #app:not(.mode-mobile) #mobile-size-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px 14px;
+    flex-wrap: wrap;
+    padding: 7px 12px;
+    background: #201d17;
+    border-bottom: 1px solid var(--line);
+  }
+}
+.size-slider-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9a917c;
+  flex: 0 0 auto;
+}
+#mobile-size-bar input[type="range"] {
+  flex: 1 1 90px;
+  max-width: 140px;
+  accent-color: var(--gold-bright);
+}
+
 .mode-mobile #search-wrap { display: none; }
 .mode-mobile #search-wrap.mobile-search-open {
   display: flex;
@@ -84,6 +113,13 @@
 @media (hover: hover) {
   .mobile-event-row:hover { background: rgba(201,154,30,0.1); }
 }
+/* Briefly highlights the row a user is sent to via a double-tap on its
+   bubble in mobile Map View (see goToListViewForItem() in mobile-list.js) */
+@keyframes mobile-row-flash {
+  0% { background: rgba(232,194,87,0.4); }
+  100% { background: transparent; }
+}
+.mobile-event-row.mobile-row-flash { animation: mobile-row-flash 1.4s ease-out; }
 .mobile-event-dot {
   width: 10px; height: 10px;
   border-radius: 50%;

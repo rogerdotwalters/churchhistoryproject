@@ -31,7 +31,7 @@ function init() {
   computeInitialView();
   renderLanes();
   routeArticle();
-  setMobileMode(window.matchMedia("(max-width: 820px)").matches);
+  setMobileMode(isMobileViewport());
 }
 
 if (document.readyState === "loading") {

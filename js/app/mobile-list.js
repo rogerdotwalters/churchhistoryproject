@@ -125,6 +125,28 @@ function scrollMobileListToEvent(id) {
   updateThumb(mobileRows.length > 1 ? idx / (mobileRows.length - 1) : 0);
 }
 
+/* Briefly highlights a row so a user landing on it (e.g. via a
+   double-tap on its bubble in mobile Map View) can tell which one it
+   is, without opening its side panel. */
+function flashMobileRow(id) {
+  const idx = mobileRows.findIndex((r) => r.type === "event" && r.evt.id === id);
+  if (idx < 0) return;
+  const el = rowElByIndex(idx);
+  if (!el) return;
+  el.classList.remove("mobile-row-flash");
+  void el.offsetWidth; // force reflow so re-adding the class replays the animation if triggered again quickly
+  el.classList.add("mobile-row-flash");
+}
+
+/* Called from map-view.js when a bubble is double-tapped in mobile Map
+   View: switches to List View and scrolls/highlights that same item's
+   row, rather than opening its side panel. */
+function goToListViewForItem(id) {
+  setMobileMode(true);
+  scrollMobileListToEvent(id);
+  flashMobileRow(id);
+}
+
 /* ---- Scrubber drag-to-jump ---- */
 let scrubbing = false;
 

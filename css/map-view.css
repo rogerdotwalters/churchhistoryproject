@@ -154,15 +154,45 @@
   outline-offset: 2px;
 }
 .event-node .dot-year {
-  font-size: 10px;
+  /* Relative to the node's own font-size (set inline, per node, every
+     render — see nodeFontPx() in map-view.js) rather than a fixed px, so
+     the year label scales along with the rest of the bubble's text
+     instead of staying a fixed size while everything around it grows. */
+  font-size: 0.82em;
   opacity: 0.85;
   flex: 0 0 auto;
 }
 .event-node.dimmed { opacity: 0.16; }
 
-.event-node.node-sm { padding: 3px 8px; font-size: 11px; }
-.event-node.node-lg { padding: 7px 14px; font-size: 13.5px; font-weight: 600; }
-.event-node.node-xl { padding: 9px 16px; font-size: 15px; font-weight: 700; }
+/* Width, font-size and padding are all set inline per node, every
+   renderLanes() call (see nodeWidthPx()/nodeFontPx()/nodePaddingPx() in
+   map-view.js) — combining desktop's importance-based or mobile's uniform
+   base size with the current zoom-linked scale factor and (mobile only)
+   the manual Bubble Size / Text Size sliders, then capping the result to
+   a screen-relative max so a bubble is never "huge" relative to the
+   viewport no matter how far zoomed in. There's nothing left for CSS
+   classes to do for sizing.
+
+   Mobile Map View bubbles are display-only (a single tap does nothing,
+   only a double-tap does anything — see handleMobileNodeTap()), so the
+   hover "pop out and expand" affordance is neutralized here: it would
+   otherwise still fire from a touch's synthetic hover state even though
+   tapping no longer opens anything. */
+.event-node.mobile-noninteractive {
+  cursor: inherit; /* let #timeline-area's grab/grabbing cursor show through instead of a clickable pointer */
+}
+.event-node.mobile-noninteractive:hover {
+  filter: none;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+  z-index: auto !important; /* cancel the base .event-node:hover rule's 999 !important */
+  /* max-width is NOT overridden here — the base .event-node:hover rule's
+     "640px !important" can only be beaten by an equally-important
+     declaration, and no CSS value works generically since each node's
+     own max-width is a dynamic, per-node inline value. Instead
+     renderLanes() (map-view.js) sets mobile nodes' max-width via
+     style.setProperty(..., "important") every render, which (being an
+     *inline* !important) outranks this stylesheet's !important. */
+}
 
 /* ---------------- Zoom / nav controls ---------------- */
 
@@ -263,7 +293,20 @@
   font-size: 11.5px;
   color: #cfc4a4;
   flex: 0 0 auto;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: background 0.15s, opacity 0.15s, border-color 0.15s;
 }
+.legend-bar-item:hover { background: rgba(255,255,255,0.06); }
+.legend-bar-item:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+.legend-bar-item.selected {
+  background: rgba(201,154,30,0.16);
+  border-color: rgba(201,154,30,0.5);
+  color: var(--gold-bright);
+}
+.legend-bar-item.dimmed { opacity: 0.4; }
 .legend-bar-item .dot {
   width: 9px;
   height: 9px;

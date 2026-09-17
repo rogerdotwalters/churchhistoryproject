@@ -42,6 +42,17 @@ function googleSearchButton(query, opts) {
   return `<a class="${cls}" href="${googleSearchUrl(query)}" target="_blank" rel="noopener noreferrer">&#128269; Search on Google &#8599;</a>`;
 }
 
+/* ---------------- Mobile / touch viewport detection ----------------
+   Single source of truth for the "narrow/touch viewport" breakpoint —
+   used both to auto-default to Mobile List View (init.js) and to gate
+   the Map View's mobile-only interaction restrictions and uniform,
+   zoom-responsive bubble sizing (map-view.js). Purely width-based (no
+   pointer/touch-capability check) to match how the rest of the app
+   already defines "mobile". */
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 820px)").matches;
+}
+
 /* ---------------- Domain / view constants ---------------- */
 const DOMAIN_MIN = 1;
 const DOMAIN_MAX = 2036;
@@ -133,6 +144,13 @@ const state = {
   selectedEventId: null,
   lifespanPerson: null,
   mobileMode: false,
+  // Manual overrides layered on top of the automatic zoom-linked bubble
+  // scaling (see nodeZoomScaleFactor() in map-view.js) — only exposed via
+  // UI in mobile Map View (the "Bubble Size"/"Text Size" sliders), but the
+  // fields themselves are read for every node regardless of viewport, so
+  // they simply have no effect (multiplier of 1) on desktop.
+  mobileSizeMultiplier: 1,
+  mobileTextMultiplier: 1,
   dataSource: "church", // "church" | "bible" | "combined"
   filters: {
     eras: new Set(),

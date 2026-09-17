@@ -27,6 +27,7 @@ function buildChipGroup(container, items, activeSet, opts) {
     on(chip, "click", () => {
       if (activeSet.has(item.id)) activeSet.delete(item.id); else activeSet.add(item.id);
       chip.classList.toggle("active");
+      renderLegend(); // keep the color-key legend's selected/dimmed state in sync (categories/genres are also toggleable there)
       renderLanes();
       renderMobileList();
     });
